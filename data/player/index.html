@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Please Wait ...</title>
+  <style type="text/css">
+    body {
+      margin: 0;
+      display: grid;
+      grid-template-rows: 4px 1fr;
+      height: 100vh;
+      background: url('../icons/128.png') center center no-repeat;
+    }
+    body[data-mode=ready] {
+      grid-template-rows: 0 1fr;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .progress {
+      background-color: #ccc;
+      height: 100%;
+    }
+    .progress div {
+      background-color: #457eff;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="progress">
+    <div></div>
+  </div>
+  <iframe src="player.html"></iframe>
+  <script type="text/javascript" src="index.js"></script>
+</body>
+</html>
