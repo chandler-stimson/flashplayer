@@ -41,7 +41,7 @@ const search = title => chrome.tabs.executeScript({
       width: o.width || o.getBoundingClientRect().width,
       height: o.height || o.getBoundingClientRect().height
     })),
-    ...[...document.querySelectorAll('a[href*=swf]')].map(o => ({
+    ...[...document.querySelectorAll('a[href*=".swf"]')].map(o => ({
       href: o.href,
       width: 600,
       height: 600
@@ -86,8 +86,12 @@ const search = title => chrome.tabs.executeScript({
         prompt('Select a Flash link to start emulation:\n\n' + links.map((s, i) => (i + 1) + ' ' + s).join('\n'), 1);
       }`
     }, ([index]) => {
-      if (index) {
-        open(objects[links[index] || links[0]], title);
+      if (!index) {
+        return;
+      }
+      index = Number(index);
+      if (isNaN(index) === false) {
+        open(objects[links[index - 1] || links[0]], title);
       }
     });
   }
@@ -100,20 +104,45 @@ chrome.browserAction.onClicked.addListener(tab => search(tab.title));
     chrome.contextMenus.create({
       title: 'Find SWF and Open in Emulator',
       id: 'search',
-      contexts: ['page']
+      contexts: ['page'],
+      documentUrlPatterns: ['*://*/*']
     });
     chrome.contextMenus.create({
       title: 'Open SWF in Emulator',
       id: 'link',
       contexts: ['link'],
-      targetUrlPatterns: ['*://*/*.swf*', '*://*/*.SWF*', '*://*/*.swf', '*://*/*.SWF']
+      targetUrlPatterns: ['*://*/*.swf*', '*://*/*.SWF*', '*://*/*.swf', '*://*/*.SWF'],
+      documentUrlPatterns: ['*://*/*']
+    });
+    chrome.storage.local.get({
+      engine: 'ruffle'
+    }, prefs => {
+      chrome.contextMenus.create({
+        title: 'Use "SWF2JS" Engine',
+        id: 'use-swf2js',
+        contexts: ['browser_action'],
+        type: 'radio',
+        checked: prefs.engine === 'swf2js'
+      });
+      chrome.contextMenus.create({
+        title: 'Use "Ruffle" Engine',
+        id: 'use-ruffle',
+        contexts: ['browser_action'],
+        type: 'radio',
+        checked: prefs.engine === 'ruffle'
+      });
     });
   };
   chrome.runtime.onStartup.addListener(startup);
   chrome.runtime.onInstalled.addListener(startup);
 }
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (info.menuItemId === 'search') {
+  if (info.menuItemId.startsWith('use-')) {
+    chrome.storage.local.set({
+      engine: info.menuItemId.replace('use-', '')
+    });
+  }
+  else if (info.menuItemId === 'search') {
     search(tab.title);
   }
   else if (info.menuItemId === 'link') {
@@ -124,3 +153,30 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     }, tab.title);
   }
 });
+
+/* FAQs & Feedback */
+{
+  const {management, runtime: {onInstalled, setUninstallURL, getManifest}, storage, tabs} = chrome;
+  if (navigator.webdriver !== true) {
+    const page = getManifest().homepage_url;
+    const {name, version} = getManifest();
+    onInstalled.addListener(({reason, previousVersion}) => {
+      management.getSelf(({installType}) => installType === 'normal' && storage.local.get({
+        'faqs': true,
+        'last-update': 0
+      }, prefs => {
+        if (reason === 'install' || (prefs.faqs && reason === 'update')) {
+          const doUpdate = (Date.now() - prefs['last-update']) / 1000 / 60 / 60 / 24 > 45;
+          if (doUpdate && previousVersion !== version) {
+            tabs.create({
+              url: page + '?version=' + version + (previousVersion ? '&p=' + previousVersion : '') + '&type=' + reason,
+              active: reason === 'install'
+            });
+            storage.local.set({'last-update': Date.now()});
+          }
+        }
+      }));
+    });
+    setUninstallURL(page + '?rd=feedback&name=' + encodeURIComponent(name) + '&version=' + version);
+  }
+}
