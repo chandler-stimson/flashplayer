@@ -21,12 +21,14 @@ const progress = o => {
   }
 };
 
-iframe.onload = async () => {
+iframe.onload = () => {
   if (!iframe.contentWindow) {
     return;
   }
-  try {
-    const response = await fetch(args.get('href'));
+  const run = async () => {
+    const json = JSON.parse(args.get('json'));
+
+    const response = await fetch(json.href);
     if (response.ok === false) {
       throw Error('no response');
     }
@@ -62,15 +64,16 @@ iframe.onload = async () => {
         document.title = args.get('title') + ` - FlashPlayer (${prefs.engine} engine)`;
         iframe.contentWindow.postMessage({
           engine: prefs.engine,
-          href: reader.result
+          href: reader.result,
+          parameters: json.parameters
         }, '*');
       });
     };
     reader.readAsDataURL(blob);
-  }
-  catch (e) {
+  };
+  run().catch(e => {
     console.warn(e);
     document.title = 'Failed - FlashPlayer';
     alert('Failed to fetch the resource: ' + e.message);
-  }
+  });
 };

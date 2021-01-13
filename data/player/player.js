@@ -17,7 +17,6 @@ Object.defineProperty(window, 'localStorage', {
 
 window.onmessage = e => {
   const request = e.data;
-
   const player = document.getElementById('player');
   const engines = {
     one() {
@@ -25,7 +24,10 @@ window.onmessage = e => {
       const ruffle = RufflePlayer.newest();
       const engine = ruffle.createPlayer();
       player.appendChild(engine);
-      engine.load(request.href);
+      engine.load({
+        'url': request.href,
+        'parameters': request.parameters
+      });
     },
     two() {
       console.log('using swf2js');

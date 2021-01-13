@@ -1,5 +1,11 @@
 'use strict';
 
+// https://www.permadi.com/tutorial/flashVars/index.html
+// http://nekogames.jp/g2.html?gid=PRM
+// https://web.archive.org/web/20030608075418/http://www.chuckecheese.com/cec2002/funstation/
+// https://www.newgrounds.com/portal/view/498969
+// https://revision.madrevision.com/bowman2/
+
 const notify = e => chrome.notifications.create({
   type: 'basic',
   iconUrl: '/data/icons/48.png',
@@ -12,17 +18,29 @@ const open = (o, title) => chrome.storage.local.get({
   height: 600,
   responsive: true
 }, prefs => {
+  let width = prefs.width;
+  let height = prefs.height;
   if (prefs.responsive) {
-    prefs.width = o.width || prefs.width;
-    prefs.height = o.height || prefs.height;
+    width = parseInt(o.width || prefs.width);
+    height = parseInt(o.height || prefs.height);
   }
+  if (isNaN(width)) {
+    width = prefs.width;
+  }
+  if (isNaN(height)) {
+    height = prefs.height;
+  }
+  width = Math.max(width, 100);
+  height = Math.max(height, 100);
   const left = screen.availLeft + Math.round((screen.availWidth - prefs.width) / 2);
   const top = screen.availTop + Math.round((screen.availHeight - prefs.height) / 2);
 
+  delete o.width;
+  delete o.height;
   chrome.windows.create({
-    url: chrome.extension.getURL('data/player/index.html?href=' + encodeURIComponent(o.href) + '&title=' + encodeURIComponent(title)),
-    width: prefs.width,
-    height: prefs.height,
+    url: chrome.extension.getURL('data/player/index.html?json=' + encodeURIComponent(JSON.stringify(o)) + '&title=' + encodeURIComponent(title)),
+    width,
+    height,
     left,
     top,
     type: 'popup'
@@ -30,32 +48,7 @@ const open = (o, title) => chrome.storage.local.get({
 });
 
 const search = title => chrome.tabs.executeScript({
-  code: `[
-    ...[...document.querySelectorAll('embed')].map(o => ({
-      href: o.src,
-      width: o.width || o.getBoundingClientRect().width,
-      height: o.height || o.getBoundingClientRect().height
-    })),
-    ...[...document.querySelectorAll('object')].map(o => ({
-      href: o.data,
-      width: o.width || o.getBoundingClientRect().width,
-      height: o.height || o.getBoundingClientRect().height
-    })),
-    ...[...document.querySelectorAll('a[href*=".swf"]')].map(o => ({
-      href: o.href,
-      width: 600,
-      height: 600
-    }))
-  ].filter(o => o.href).map(o => {
-    if (o.href.startsWith('http') || o.href.startsWith('data:')) {
-      return o;
-    }
-    try {
-      o.href = new URL(o.href, location.href).href;
-    }
-    catch (e) {}
-    return o;
-  })`,
+  file: 'data/detect.js',
   runAt: 'document_start',
   allFrames: true,
   matchAboutBlank: true
@@ -64,15 +57,16 @@ const search = title => chrome.tabs.executeScript({
   if (lastError) {
     return notify(lastError);
   }
-
   const objects = {};
   a.flat().forEach(o => {
     if (o.href) {
-      objects[o.href] = o;
+      objects[o.href] = {
+        ...(objects[o.href] || {}),
+        ...o
+      };
     }
   });
   const links = Object.keys(objects);
-
   if (links.length === 0) {
     notify('No Flash (SWF) content is detected');
   }
@@ -98,6 +92,11 @@ const search = title => chrome.tabs.executeScript({
 });
 
 chrome.browserAction.onClicked.addListener(tab => search(tab.title));
+chrome.runtime.onMessage.addListener((request, sender) => {
+  if (request.method === 'request-detect') {
+    search(sender.tab.title);
+  }
+});
 
 {
   const startup = () => {
@@ -154,6 +153,26 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   }
 });
 
+chrome.runtime.onInstalled.addListener(() => {
+  const rule = {
+    conditions: [
+      new chrome.declarativeContent.PageStateMatcher({
+        css: [
+          'embed[src*=swf], object[type="application/x-shockwave-flash"]'
+        ]
+      })
+    ],
+    actions: [new chrome.declarativeContent.RequestContentScript({
+      allFrames: true,
+      matchAboutBlank: true,
+      js: ['/data/inject.js']
+    })]
+  };
+  chrome.declarativeContent.onPageChanged.removeRules(undefined, () => {
+    chrome.declarativeContent.onPageChanged.addRules([rule]);
+  });
+});
+
 /* FAQs & Feedback */
 {
   const {management, runtime: {onInstalled, setUninstallURL, getManifest}, storage, tabs} = chrome;
@@ -166,12 +185,13 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         'last-update': 0
       }, prefs => {
         if (reason === 'install' || (prefs.faqs && reason === 'update')) {
-          const doUpdate = (Date.now() - prefs['last-update']) / 1000 / 60 / 60 / 24 > 45;
+          const doUpdate = (Date.now() - prefs['last-update']) / 1000 / 60 / 60 / 24 > 90;
           if (doUpdate && previousVersion !== version) {
-            tabs.create({
+            tabs.query({active: true, currentWindow: true}, tbs => tabs.create({
               url: page + '?version=' + version + (previousVersion ? '&p=' + previousVersion : '') + '&type=' + reason,
-              active: reason === 'install'
-            });
+              active: reason === 'install',
+              ...(tbs && tbs.length && {index: tbs[0].index + 1})
+            }));
             storage.local.set({'last-update': Date.now()});
           }
         }
