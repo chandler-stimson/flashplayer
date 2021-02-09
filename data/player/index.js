@@ -62,11 +62,12 @@ iframe.onload = () => {
         engine: 'ruffle'
       }, prefs => {
         document.title = args.get('title') + ` - FlashPlayer (${prefs.engine} engine)`;
-        iframe.contentWindow.postMessage({
+        setTimeout(() => iframe.contentWindow.postMessage({
           engine: prefs.engine,
           href: reader.result,
-          parameters: json.parameters
-        }, '*');
+          parameters: json.parameters,
+          origin: json.href
+        }, '*'), 0);
       });
     };
     reader.readAsDataURL(blob);
@@ -77,3 +78,18 @@ iframe.onload = () => {
     alert('Failed to fetch the resource: ' + e.message);
   });
 };
+
+window.addEventListener('message', e => {
+  const request = e.data;
+  if (request.method === 'fetch') {
+    fetch(request.href).then(async r => {
+      const content = await r.arrayBuffer();
+      iframe.contentWindow.postMessage({
+        content,
+        type: r.headers.get('Content-Type')
+      }, '*');
+    }).catch(e => iframe.contentWindow.postMessage({
+      error: e.message
+    }, '*'));
+  }
+});

@@ -15,6 +15,39 @@ Object.defineProperty(window, 'localStorage', {
   }
 });
 
+const f = window.fetch;
+window.fetch = function(...args) {
+  const href = args[0].url || args[0];
+
+  if (href.startsWith('http')) {
+    console.log('fetching', href);
+    return new Promise((resolve, reject) => {
+      window.onmessage = e => {
+        const {content, type, error} = e.data;
+        if (error) {
+          reject(new Error(error));
+        }
+        else {
+          const response = new Response(content, {
+            'status': 200,
+            'headers': {
+              'Content-Type': type
+            }
+          });
+          resolve(response);
+        }
+      };
+      top.postMessage({
+        method: 'fetch',
+        href
+      }, '*');
+    });
+  }
+  else {
+    return f.apply(this, args);
+  }
+};
+
 window.onmessage = e => {
   const request = e.data;
   const player = document.getElementById('player');
@@ -36,6 +69,10 @@ window.onmessage = e => {
       });
     }
   };
+  const base = document.createElement('base');
+  base.href = request.origin;
+  document.head.appendChild(base);
+
   if (request.engine === 'ruffle') {
     try {
       engines.one();

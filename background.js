@@ -5,6 +5,7 @@
 // https://web.archive.org/web/20030608075418/http://www.chuckecheese.com/cec2002/funstation/
 // https://www.newgrounds.com/portal/view/498969
 // https://revision.madrevision.com/bowman2/
+// https://www.stsci.edu/~marel/black_holes/modules.html
 
 const notify = e => chrome.notifications.create({
   type: 'basic',
@@ -30,8 +31,8 @@ const open = (o, title) => chrome.storage.local.get({
   if (isNaN(height)) {
     height = prefs.height;
   }
-  width = Math.max(width, 100);
-  height = Math.max(height, 100);
+  width = Math.max(width, 200);
+  height = Math.max(height, 200);
   const left = screen.availLeft + Math.round((screen.availWidth - prefs.width) / 2);
   const top = screen.availTop + Math.round((screen.availHeight - prefs.height) / 2);
 
@@ -113,6 +114,12 @@ chrome.runtime.onMessage.addListener((request, sender) => {
       targetUrlPatterns: ['*://*/*.swf*', '*://*/*.SWF*', '*://*/*.swf', '*://*/*.SWF'],
       documentUrlPatterns: ['*://*/*']
     });
+    chrome.contextMenus.create({
+      title: 'Directly Inject "Ruffle" to This Page',
+      id: 'inject-ruffle',
+      contexts: ['browser_action'],
+      enabled: false
+    });
     chrome.storage.local.get({
       engine: 'ruffle'
     }, prefs => {
@@ -151,6 +158,12 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       href: info.linkUrl
     }, tab.title);
   }
+  else if (info.menuItemId === 'inject-ruffle') {
+    chrome.tabs.executeScript(tab.id, {
+      file: 'data/player/ruffle/ruffle.js',
+      runAt: 'document_start'
+    });
+  }
 });
 
 chrome.runtime.onInstalled.addListener(() => {
@@ -158,7 +171,7 @@ chrome.runtime.onInstalled.addListener(() => {
     conditions: [
       new chrome.declarativeContent.PageStateMatcher({
         css: [
-          'embed[src*=swf], object[type="application/x-shockwave-flash"]'
+          'embed[src*=swf], object[type="application/x-shockwave-flash"], object param[name="movie"]'
         ]
       })
     ],

@@ -1,7 +1,4 @@
-for (const e of [
-  ...document.querySelectorAll('embed[src*=swf]'),
-  ...document.querySelectorAll('object[type="application/x-shockwave-flash"]')
-]) {
+const add = e => {
   if (e.dataset.attached !== 'true') {
     const span = document.createElement('span');
     span.textContent = 'Run this Flash';
@@ -28,4 +25,26 @@ for (const e of [
     e.parentElement.insertBefore(span, e);
     e.dataset.attached = true;
   }
+};
+
+for (const e of [...document.querySelectorAll('object[type="application/x-shockwave-flash"]')]) {
+  add(e);
 }
+for (const e of [...document.querySelectorAll('embed[src*=swf]')]) {
+  if (e.parentElement.tagName === 'OBJECT') {
+    add(e.parentElement);
+  }
+  else {
+    add(e);
+  }
+}
+for (const c of [...document.querySelectorAll('object param[name="movie"]')]) {
+  const e = c.parentElement;
+  if (e.parentElement.tagName === 'OBJECT') {
+    add(e.parentElement);
+  }
+  else {
+    add(e);
+  }
+}
+

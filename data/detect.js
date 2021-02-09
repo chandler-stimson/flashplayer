@@ -24,6 +24,11 @@ function parse(o) {
   if (o.embed && o.embed.src) {
     rtn.href = o.embed.src;
   }
+  if (rtn.href.indexOf(':') === -1) {
+    const a = document.createElement('a');
+    a.href = rtn.href;
+    rtn.href = a.href;
+  }
   return rtn;
 }
 
@@ -36,7 +41,7 @@ if (document.querySelector('[data-sdfseeds]')) {
       object: o.parentElement && o.parentElement.tagName === 'OBJECT' ? o.parentElement : undefined,
       width: o.width || o.getBoundingClientRect().width,
       height: o.height || o.getBoundingClientRect().height
-    }].map(parse)
+    }].map(parse);
   }
   else {
     const rtn = {
@@ -47,7 +52,7 @@ if (document.querySelector('[data-sdfseeds]')) {
       rtn.width = rtn.embed.width || rtn.embed.getBoundingClientRect().width;
       rtn.height = rtn.embed.height || rtn.embed.getBoundingClientRect().height;
     }
-    [rtn].map(parse)
+    [rtn].map(parse);
   }
 }
 else {
@@ -66,8 +71,8 @@ else {
         embed: o.querySelector('embed') ? o.querySelector('embed') : undefined
       };
       if (rtn.embed) {
-        rtn.width = rtn.embed.width || rtn.embed.getBoundingClientRect().width,
-        rtn.height = rtn.embed.height || rtn.embed.getBoundingClientRect().height
+        rtn.width = rtn.embed.width || rtn.embed.getBoundingClientRect().width;
+        rtn.height = rtn.embed.height || rtn.embed.getBoundingClientRect().height;
       }
       return rtn;
     }),
@@ -85,6 +90,6 @@ else {
     }
     catch (e) {}
     return o;
-  })
+  });
 }
 
