@@ -24,11 +24,18 @@ function parse(o) {
   if (o.embed && o.embed.src) {
     rtn.href = o.embed.src;
   }
+  if (o.object) {
+    const e = o.object.querySelector('ruffle-embed');
+    if (e && e.getAttribute('src')) {
+      rtn.href = e.getAttribute('src');
+    }
+  }
   if (rtn.href.indexOf(':') === -1) {
     const a = document.createElement('a');
     a.href = rtn.href;
     rtn.href = a.href;
   }
+  rtn.referer = location.href;
   return rtn;
 }
 
@@ -56,7 +63,7 @@ if (document.querySelector('[data-sdfseeds]')) {
   }
 }
 else {
-  [
+  const obs = [
     ...[...document.querySelectorAll('embed')].map(o => {
       return {
         object: o.parentElement && o.parentElement.tagName === 'OBJECT' ? o.parentElement : undefined,
@@ -81,7 +88,16 @@ else {
       width: 600,
       height: 600
     }))
-  ].map(parse).filter(o => o.href).map(o => {
+  ];
+  if (obs.length === 0) {
+    [...document.documentElement.innerHTML.matchAll(/https?:\/\/.*\.swf/g)].map(href => {
+      obs.push({
+        href
+      });
+    });
+  }
+
+  obs.map(parse).filter(o => o.href && o.href.endsWith('.html') === false).map(o => {
     if (o.href.startsWith('http') || o.href.startsWith('data:')) {
       return o;
     }

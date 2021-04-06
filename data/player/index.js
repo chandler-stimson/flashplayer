@@ -25,9 +25,9 @@ iframe.onload = () => {
   if (!iframe.contentWindow) {
     return;
   }
+  const json = JSON.parse(args.get('json'));
   const run = async () => {
-    const json = JSON.parse(args.get('json'));
-
+    document.title = 'Fetching ' + json.href;
     const response = await fetch(json.href);
     if (response.ok === false) {
       throw Error('no response');
@@ -66,8 +66,9 @@ iframe.onload = () => {
           engine: prefs.engine,
           href: reader.result,
           parameters: json.parameters,
-          origin: json.href
-        }, '*'), 0);
+          origin: json.href,
+          referer: json.referer
+        }, '*'), 100);
       });
     };
     reader.readAsDataURL(blob);
@@ -75,7 +76,7 @@ iframe.onload = () => {
   run().catch(e => {
     console.warn(e);
     document.title = 'Failed - FlashPlayer';
-    alert('Failed to fetch the resource: ' + e.message);
+    alert('Failed to fetch the resource: ' + e.message + '\n\nResource Link:\n' + json.href);
   });
 };
 

@@ -1,6 +1,8 @@
 /* global swf2js, RufflePlayer */
 'use strict';
 
+const base = document.createElement('base');
+
 const cache = {};
 Object.defineProperty(window, 'localStorage', {
   value() {
@@ -17,10 +19,18 @@ Object.defineProperty(window, 'localStorage', {
 
 const f = window.fetch;
 window.fetch = function(...args) {
-  const href = args[0].url || args[0];
+  let href = args[0].url || args[0];
 
-  if (href.startsWith('http')) {
+  if (href.startsWith('data:') || href.startsWith('chrome-extension')) {
+    return f.apply(this, args);
+  }
+  else {
     console.log('fetching', href);
+    if (href.startsWith('http') === false) {
+      const a = document.createElement('a');
+      a.setAttribute('href', href);
+      href = a.href;
+    }
     return new Promise((resolve, reject) => {
       window.onmessage = e => {
         const {content, type, error} = e.data;
@@ -31,7 +41,8 @@ window.fetch = function(...args) {
           const response = new Response(content, {
             'status': 200,
             'headers': {
-              'Content-Type': type
+              'Content-Type': type,
+              'referer': base.href
             }
           });
           resolve(response);
@@ -43,8 +54,41 @@ window.fetch = function(...args) {
       }, '*');
     });
   }
-  else {
-    return f.apply(this, args);
+};
+window.XMLHttpRequest = class {
+  constructor() {
+    this.responseType = 'arraybuffer';
+  }
+  open(method, href) {
+    this.method = method;
+    this.href = href;
+  }
+  send() {
+    if (this.href.startsWith('data:')) {
+      f(this.href).then(r => r.arrayBuffer()).then(c => {
+        this.readyState = 4;
+        this.status = 200;
+        this.response = c;
+        this.onreadystatechange();
+      });
+    }
+    else {
+      if (this.href.startsWith('http') === false) {
+        const a = document.createElement('a');
+        a.setAttribute('href', this.href);
+        this.href = a.href;
+      }
+      console.log(this.href);
+
+      window.fetch(this.href, {
+        method: this.method
+      }).then(r => r.arrayBuffer()).then(c => {
+        this.readyState = 4;
+        this.status = 200;
+        this.response = c;
+        this.onreadystatechange();
+      });
+    }
   }
 };
 
@@ -63,14 +107,23 @@ window.onmessage = e => {
       });
     },
     two() {
-      console.log('using swf2js');
+      console.log('using swf2js', request);
+      const parameters = {};
+      if (request.parameters) {
+        const o = new URLSearchParams(request.parameters);
+        for (const [key, value] of o) {
+          parameters[key] = value;
+        }
+      }
+
       swf2js.load(request.href, {
-        'tagId': 'player'
+        'tagId': 'player',
+        'bgcolor': '#ffffff',
+        'FlashVars': parameters
       });
     }
   };
-  const base = document.createElement('base');
-  base.href = request.origin;
+  base.href = request.referer;
   document.head.appendChild(base);
 
   if (request.engine === 'ruffle') {

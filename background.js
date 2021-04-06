@@ -6,6 +6,8 @@
 // https://www.newgrounds.com/portal/view/498969
 // https://revision.madrevision.com/bowman2/
 // https://www.stsci.edu/~marel/black_holes/modules.html
+// https://armorgames.com/play/2267/warfare-1917
+// https://www.meninasjogos.com.br/vista-barbie-de-princesa-disney/
 
 const notify = e => chrome.notifications.create({
   type: 'basic',
@@ -31,8 +33,8 @@ const open = (o, title) => chrome.storage.local.get({
   if (isNaN(height)) {
     height = prefs.height;
   }
-  width = Math.max(width, 200);
-  height = Math.max(height, 200);
+  width = Math.max(width, 400);
+  height = Math.max(height, 400);
   const left = screen.availLeft + Math.round((screen.availWidth - prefs.width) / 2);
   const top = screen.availTop + Math.round((screen.availHeight - prefs.height) / 2);
 
@@ -137,13 +139,21 @@ chrome.runtime.onMessage.addListener((request, sender) => {
         type: 'radio',
         checked: prefs.engine === 'ruffle'
       });
+      chrome.contextMenus.create({
+        title: 'Restart the Extension',
+        id: 'restart',
+        contexts: ['browser_action']
+      });
     });
   };
   chrome.runtime.onStartup.addListener(startup);
   chrome.runtime.onInstalled.addListener(startup);
 }
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (info.menuItemId.startsWith('use-')) {
+  if (info.menuItemId === 'restart') {
+    chrome.runtime.reload();
+  }
+  else if (info.menuItemId.startsWith('use-')) {
     chrome.storage.local.set({
       engine: info.menuItemId.replace('use-', '')
     });
@@ -171,7 +181,7 @@ chrome.runtime.onInstalled.addListener(() => {
     conditions: [
       new chrome.declarativeContent.PageStateMatcher({
         css: [
-          'embed[src*=swf], object[type="application/x-shockwave-flash"], object param[name="movie"]'
+          'embed[src*=swf],object[type="application/x-shockwave-flash"],param[name="movie"]'
         ]
       })
     ],
