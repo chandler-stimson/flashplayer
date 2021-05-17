@@ -78,8 +78,6 @@ window.XMLHttpRequest = class {
         a.setAttribute('href', this.href);
         this.href = a.href;
       }
-      console.log(this.href);
-
       window.fetch(this.href, {
         method: this.method
       }).then(r => r.arrayBuffer()).then(c => {

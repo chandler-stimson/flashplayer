@@ -5,7 +5,6 @@
 // https://web.archive.org/web/20030608075418/http://www.chuckecheese.com/cec2002/funstation/
 // https://www.newgrounds.com/portal/view/498969
 // https://revision.madrevision.com/bowman2/
-// https://www.stsci.edu/~marel/black_holes/modules.html
 // https://armorgames.com/play/2267/warfare-1917
 // https://www.meninasjogos.com.br/vista-barbie-de-princesa-disney/
 
