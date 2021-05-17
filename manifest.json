@@ -1,6 +1,6 @@
 {
   "manifest_version": 2,
-  "version": "0.1.4",
+  "version": "0.1.5",
   "name": "FlashPlayer - SWF to HTML",
   "description": "Open SWF links of Adobe Animate (Flash) in a pure sandboxed JavaScript emulator",
   "permissions": [
@@ -41,5 +41,9 @@
     ],
     "run_at": "document_start",
     "all_frames": true
-  }]
+  }],
+  "web_accessible_resources": [
+    "/data/player/ruffle/ruffle.js",
+    "/data/player/ruffle/*.wasm"
+  ]
 }

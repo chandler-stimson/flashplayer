@@ -116,10 +116,10 @@ chrome.runtime.onMessage.addListener((request, sender) => {
       documentUrlPatterns: ['*://*/*']
     });
     chrome.contextMenus.create({
-      title: 'Directly Inject "Ruffle" to This Page',
+      title: 'Load all embedded SWF objects',
       id: 'inject-ruffle',
       contexts: ['browser_action'],
-      enabled: false
+      enabled: true
     });
     chrome.storage.local.get({
       engine: 'ruffle'
@@ -169,7 +169,11 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   }
   else if (info.menuItemId === 'inject-ruffle') {
     chrome.tabs.executeScript(tab.id, {
-      file: 'data/player/ruffle/ruffle.js',
+      code: `{
+        const s = document.createElement('script');
+        s.src = '${chrome.runtime.getURL('/data/player/ruffle/ruffle.js')}';
+        document.body.appendChild(s);
+      }`,
       runAt: 'document_start'
     });
   }

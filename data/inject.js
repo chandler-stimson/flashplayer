@@ -1,6 +1,10 @@
 const add = e => {
   if (e.dataset.attached !== 'true') {
+    if (e.querySelector('.swf2html')) {
+      return;
+    }
     const span = document.createElement('span');
+    span.classList.add('swf2html');
     span.textContent = 'Run this Flash';
     span.style = `
       all: initial;
@@ -47,4 +51,3 @@ for (const c of [...document.querySelectorAll('object param[name="movie"]')]) {
     add(e);
   }
 }
-
