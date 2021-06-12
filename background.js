@@ -49,11 +49,10 @@ const open = (o, title) => chrome.storage.local.get({
   });
 });
 
-const search = title => chrome.tabs.executeScript({
+const search = (title, frameId) => chrome.tabs.executeScript({
   file: 'data/detect.js',
   runAt: 'document_start',
-  allFrames: true,
-  matchAboutBlank: true
+  frameId
 }, a => {
   const lastError = chrome.runtime.lastError;
   if (lastError) {
@@ -96,7 +95,15 @@ const search = title => chrome.tabs.executeScript({
 chrome.browserAction.onClicked.addListener(tab => search(tab.title));
 chrome.runtime.onMessage.addListener((request, sender) => {
   if (request.method === 'request-detect') {
-    search(sender.tab.title);
+    search(sender.tab.title, sender.frameId);
+  }
+  else if (request.method === 'detect-objects') {
+    chrome.tabs.executeScript(sender.tab.id, {
+      file: 'data/inject.js',
+      runAt: 'document_start',
+      allFrames: true,
+      matchAboutBlank: true
+    });
   }
 });
 
@@ -177,26 +184,6 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       runAt: 'document_start'
     });
   }
-});
-
-chrome.runtime.onInstalled.addListener(() => {
-  const rule = {
-    conditions: [
-      new chrome.declarativeContent.PageStateMatcher({
-        css: [
-          'embed[src*=swf],object[type="application/x-shockwave-flash"],param[name="movie"]'
-        ]
-      })
-    ],
-    actions: [new chrome.declarativeContent.RequestContentScript({
-      allFrames: true,
-      matchAboutBlank: true,
-      js: ['/data/inject.js']
-    })]
-  };
-  chrome.declarativeContent.onPageChanged.removeRules(undefined, () => {
-    chrome.declarativeContent.onPageChanged.addRules([rule]);
-  });
 });
 
 /* FAQs & Feedback */
