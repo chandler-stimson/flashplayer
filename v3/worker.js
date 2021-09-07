@@ -55,7 +55,7 @@ const open = (o, title) => chrome.storage.local.get({
   });
 });
 
-const search = async (tab, frameId) => {
+const search = async (tab, frameId, c) => {
   try {
     const target = {
       tabId: tab.id
@@ -85,26 +85,32 @@ const search = async (tab, frameId) => {
 
     const links = Object.keys(objects);
     if (links.length === 0) {
-      notify('No Flash (SWF) content is detected');
+      return notify('No Flash (SWF) content is detected');
     }
-    else if (links.length === 1) {
-      open(objects[links[0]], tab.title);
+
+    if (c) {
+      c(links);
     }
     else {
-      const r = await chrome.scripting.executeScript({
-        target: {
-          tabId: tab.id
-        },
-        func: links => {
-          return prompt('Select the Flash resource to start emulator with:\n\n' + links.map((s, i) => (i + 1) + ' ' + s).join('\n'), 1);
-        },
-        args: [links]
-      });
-      const index = r[0].result;
-      if (index) {
-        const n = Number(index);
-        if (isNaN(n) === false) {
-          open(objects[links[n - 1] || links[0]], tab.title);
+      if (links.length === 1) {
+        open(objects[links[0]], tab.title);
+      }
+      else {
+        const r = await chrome.scripting.executeScript({
+          target: {
+            tabId: tab.id
+          },
+          func: links => {
+            return prompt('Select the Flash resource to start emulator with:\n\n' + links.map((s, i) => (i + 1) + ' ' + s).join('\n'), 1);
+          },
+          args: [links]
+        });
+        const index = r[0].result;
+        if (index) {
+          const n = Number(index);
+          if (isNaN(n) === false) {
+            open(objects[links[n - 1] || links[0]], tab.title);
+          }
         }
       }
     }
@@ -156,6 +162,11 @@ chrome.runtime.onMessage.addListener((request, sender) => {
       id: 'open-empty',
       contexts: ['action']
     });
+    chrome.contextMenus.create({
+      title: 'Copy SWF URL(s) to Clipboard',
+      id: 'copy',
+      contexts: ['action']
+    });
     chrome.storage.local.get({
       engine: 'ruffle'
     }, prefs => {
@@ -184,7 +195,23 @@ chrome.runtime.onMessage.addListener((request, sender) => {
   chrome.runtime.onInstalled.addListener(startup);
 }
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (info.menuItemId === 'restart') {
+  if (info.menuItemId === 'copy') {
+    search(tab, undefined, links => {
+      chrome.tabs.update(tab.id, {
+        highlighted: true
+      }, () => chrome.scripting.executeScript({
+        target: {
+          tabId: tab.id
+        },
+        func: links => {
+          window.focus();
+          navigator.clipboard.writeText(links.join('\n')).catch(e => alert(e.message));
+        },
+        args: [links]
+      }));
+    });
+  }
+  else if (info.menuItemId === 'restart') {
     chrome.runtime.reload();
   }
   else if (info.menuItemId.startsWith('use-')) {
