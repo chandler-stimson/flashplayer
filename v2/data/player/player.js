@@ -20,6 +20,9 @@ Object.defineProperty(window, 'localStorage', {
 const f = window.fetch;
 window.fetch = function(...args) {
   let href = args[0].url || args[0];
+  if (href.href) {
+    href = href.href;
+  }
 
   if (href.startsWith('data:') || href.startsWith('chrome-extension')) {
     return f.apply(this, args);
