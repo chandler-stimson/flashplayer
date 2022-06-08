@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "0.2.3",
+  "version": "0.2.4",
   "name": "FlashPlayer - SWF to HTML",
   "description": "Open SWF links of Adobe Animate (Flash) in a pure sandboxed JavaScript emulator",
   "permissions": [
@@ -49,8 +49,6 @@
     "matches": ["*://*/*"]
   }],
   "commands": {
-    "_execute_action": {
-      "description": "Press the action button"
-    }
+    "_execute_action": {}
   }
 }

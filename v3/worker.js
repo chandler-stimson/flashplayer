@@ -167,6 +167,16 @@ chrome.runtime.onMessage.addListener((request, sender) => {
       id: 'copy',
       contexts: ['action']
     });
+    chrome.contextMenus.create({
+      title: 'Open Test Flash Page',
+      id: 'test',
+      contexts: ['action']
+    });
+    chrome.contextMenus.create({
+      title: 'Engine',
+      id: 'engine',
+      contexts: ['action']
+    });
     chrome.storage.local.get({
       engine: 'ruffle'
     }, prefs => {
@@ -175,20 +185,22 @@ chrome.runtime.onMessage.addListener((request, sender) => {
         id: 'use-swf2js',
         contexts: ['action'],
         type: 'radio',
-        checked: prefs.engine === 'swf2js'
+        checked: prefs.engine === 'swf2js',
+        parentId: 'engine'
       });
       chrome.contextMenus.create({
         title: 'Use "Ruffle" Engine',
         id: 'use-ruffle',
         contexts: ['action'],
         type: 'radio',
-        checked: prefs.engine === 'ruffle'
+        checked: prefs.engine === 'ruffle',
+        parentId: 'engine'
       });
-      chrome.contextMenus.create({
-        title: 'Restart the Extension',
-        id: 'restart',
-        contexts: ['action']
-      });
+    });
+    chrome.contextMenus.create({
+      title: 'Restart the Extension',
+      id: 'restart',
+      contexts: ['action']
     });
   };
   chrome.runtime.onStartup.addListener(startup);
@@ -197,18 +209,30 @@ chrome.runtime.onMessage.addListener((request, sender) => {
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === 'copy') {
     search(tab, undefined, links => {
-      chrome.tabs.update(tab.id, {
-        highlighted: true
-      }, () => chrome.scripting.executeScript({
-        target: {
-          tabId: tab.id
-        },
-        func: links => {
-          window.focus();
-          navigator.clipboard.writeText(links.join('\n')).catch(e => alert(e.message));
-        },
-        args: [links]
-      }));
+      if (links.length) {
+        notify(`Copying ${links.length} links to the clipboard`);
+        chrome.tabs.update(tab.id, {
+          active: true
+        }, () => chrome.scripting.executeScript({
+          target: {
+            tabId: tab.id
+          },
+          func: links => {
+            window.focus();
+            navigator.clipboard.writeText(links.join('\n')).catch(e => alert(e.message));
+          },
+          args: [links]
+        }).catch(notify));
+      }
+      else {
+        notify('No Flash link is detected!');
+      }
+    });
+  }
+  else if (info.menuItemId === 'test') {
+    chrome.tabs.create({
+      url: 'https://webbrowsertools.com/test-flash-player/',
+      index: tab.index + 1
     });
   }
   else if (info.menuItemId === 'restart') {
@@ -238,9 +262,14 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         const s = document.createElement('script');
         s.src = src;
         document.body.appendChild(s);
+        s.onload = () => {
+          for (const e of [...document.querySelectorAll('.swf2html')]) {
+            e.remove();
+          }
+        };
       },
       args: [chrome.runtime.getURL('/data/player/ruffle/ruffle.js')]
-    });
+    }).catch(notify);
   }
   else if (info.menuItemId === 'open-empty') {
     open({}, 'Local SWF');
