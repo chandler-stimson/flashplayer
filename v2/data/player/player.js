@@ -95,6 +95,7 @@ window.XMLHttpRequest = class {
 
 window.onmessage = e => {
   const request = e.data;
+  console.log(request);
   const player = document.getElementById('player');
   const engines = {
     one() {
@@ -157,4 +158,19 @@ window.onmessage = e => {
       }
     }
   }
+};
+
+document.ondragstart = e => e.preventDefault();
+document.ondragover = e => e.preventDefault();
+document.ondrop = e => {
+  e.preventDefault();
+  const file = [...e.dataTransfer.files].shift();
+  const reader = new FileReader();
+  reader.onload = () => {
+    top.postMessage({
+      method: 'file',
+      href: reader.result
+    }, '*');
+  };
+  reader.readAsDataURL(file);
 };
