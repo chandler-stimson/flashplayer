@@ -43,8 +43,6 @@ const open = (o, title) => chrome.storage.local.get({
   delete o.width;
   delete o.height;
 
-  console.log(o);
-
   chrome.windows.create({
     url: '/data/player/index.html?json=' + encodeURIComponent(JSON.stringify(o)) + '&title=' + encodeURIComponent(title),
     width,
@@ -203,7 +201,6 @@ chrome.runtime.onMessage.addListener((request, sender) => {
       contexts: ['action']
     });
   };
-  chrome.runtime.onStartup.addListener(startup);
   chrome.runtime.onInstalled.addListener(startup);
 }
 chrome.contextMenus.onClicked.addListener((info, tab) => {

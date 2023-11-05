@@ -62,6 +62,7 @@ iframe.onload = () => {
         engine: 'ruffle'
       }, prefs => {
         document.title = args.get('title') + ` - FlashPlayer (${prefs.engine} engine)`;
+
         setTimeout(() => iframe.contentWindow.postMessage({
           engine: prefs.engine,
           href: reader.result,

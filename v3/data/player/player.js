@@ -28,7 +28,6 @@ window.fetch = function(...args) {
     return f.apply(this, args);
   }
   else {
-    console.log('fetching', href);
     if (href.startsWith('http') === false) {
       const a = document.createElement('a');
       a.setAttribute('href', href);
@@ -95,11 +94,14 @@ window.XMLHttpRequest = class {
 
 window.onmessage = e => {
   const request = e.data;
-  console.log(request);
+  if (!request) {
+    return;
+  }
+
   const player = document.getElementById('player');
   const engines = {
     one() {
-      console.log('using ruffle', request);
+      console.info('using ruffle', request);
       const ruffle = RufflePlayer.newest();
       const engine = ruffle.createPlayer();
       player.appendChild(engine);
@@ -109,7 +111,7 @@ window.onmessage = e => {
       });
     },
     two() {
-      console.log('using swf2js', request);
+      console.info('using swf2js', request);
       const parameters = {};
       if (request.parameters) {
         const o = new URLSearchParams(request.parameters);
@@ -128,22 +130,7 @@ window.onmessage = e => {
   base.href = request.referer;
   document.head.appendChild(base);
 
-  if (request.engine === 'ruffle') {
-    try {
-      engines.one();
-    }
-    catch (e) {
-      console.warn(e);
-      try {
-        player.textContent = '';
-        engines.two();
-      }
-      catch (e) {
-        alert('Emulator crashed!\n\n' + e.message);
-      }
-    }
-  }
-  else {
+  if (request.engine === 'swf2js') {
     try {
       engines.two();
     }
@@ -152,6 +139,21 @@ window.onmessage = e => {
       try {
         player.textContent = '';
         engines.one();
+      }
+      catch (e) {
+        alert('Emulator crashed!\n\n' + e.message);
+      }
+    }
+  }
+  else {
+    try {
+      engines.one();
+    }
+    catch (e) {
+      console.warn(e);
+      try {
+        player.textContent = '';
+        engines.two();
       }
       catch (e) {
         alert('Emulator crashed!\n\n' + e.message);
