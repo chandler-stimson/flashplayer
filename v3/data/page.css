@@ -1,0 +1,29 @@
+@layer reset {
+  .swf2html {
+    all: initial;
+  }
+}
+@layer positioning {
+  .swf2html {
+    position: relative;
+    display: grid;
+    place-items: center;
+    z-index: calc(Infinity);
+  }
+  .swf2html.embed {
+    margin-inline: auto;
+  }
+}
+@layer styling {
+  .swf2html {
+    background-color: #e0e0e0;
+    color: #646464;
+    padding: 2px 5px;
+    cursor: pointer;
+    width: min-content;
+    white-space: nowrap;
+    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+    font-size: 12px;
+    user-select: none;
+  }
+}

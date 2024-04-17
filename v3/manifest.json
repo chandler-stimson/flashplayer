@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "0.2.8",
+  "version": "0.2.9",
   "name": "FlashPlayer - SWF to HTML",
   "description": "Open SWF links of Adobe Animate (Flash) in a pure sandboxed JavaScript emulator",
   "permissions": [
@@ -14,13 +14,13 @@
     "*://*/*"
   ],
   "icons": {
-    "16": "data/icons/16.png",
-    "32": "data/icons/32.png",
-    "48": "data/icons/48.png",
-    "64": "data/icons/64.png",
-    "128": "data/icons/128.png",
-    "256": "data/icons/256.png",
-    "512": "data/icons/512.png"
+    "16": "/data/icons/16.png",
+    "32": "/data/icons/32.png",
+    "48": "/data/icons/48.png",
+    "64": "/data/icons/64.png",
+    "128": "/data/icons/128.png",
+    "256": "/data/icons/256.png",
+    "512": "/data/icons/512.png"
   },
   "background": {
     "service_worker": "worker.js"
@@ -30,14 +30,13 @@
     "default_title": "Click to search for embedded SWF contents"
   },
   "sandbox": {
-    "pages": ["data/player/player.html"]
+    "pages": ["/data/player/player.html"]
   },
   "content_scripts": [{
     "match_about_blank": true,
     "matches": ["<all_urls>"],
-    "js": [
-      "data/page.js"
-    ],
+    "js": ["/data/page.js"],
+    "css": ["/data/page.css"],
     "run_at": "document_start",
     "all_frames": true
   }],
