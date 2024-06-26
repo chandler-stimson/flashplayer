@@ -7,9 +7,12 @@
     body {
       margin: 0;
       display: grid;
-      grid-template-rows: 4px 1fr;
+      grid-template-rows: 0 1fr;
       height: 100vh;
       background: url('../icons/128.png') center center no-repeat;
+    }
+    body[data-mode=loading] {
+      grid-template-rows: 4px 1fr;
     }
     body[data-mode=ready] {
       grid-template-rows: 0 1fr;

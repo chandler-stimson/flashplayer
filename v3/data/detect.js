@@ -24,6 +24,10 @@ function parse(o) {
   if (o.embed && o.embed.src) {
     rtn.href = o.embed.src;
   }
+  if (o.embed && o.embed.hasAttribute('flashvars')) {
+    rtn.parameters = o.embed.getAttribute('flashvars');
+  }
+
   if (o.object) {
     const e = o.object.querySelector('ruffle-embed');
     if (e && e.getAttribute('src')) {

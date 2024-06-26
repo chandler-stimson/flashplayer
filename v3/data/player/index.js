@@ -27,6 +27,7 @@ iframe.onload = () => {
     return;
   }
   const run = async () => {
+    document.body.dataset.mode = 'loading';
     document.title = 'Fetching ' + json.href;
     const response = await fetch(json.href);
     if (response.ok === false) {

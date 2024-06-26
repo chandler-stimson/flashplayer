@@ -105,7 +105,11 @@ window.onmessage = e => {
       const ruffle = RufflePlayer.newest();
       const engine = ruffle.createPlayer();
       player.appendChild(engine);
+      // https://github.com/ruffle-rs/ruffle/wiki/Using-Ruffle#configuration-options
+
       engine.load({
+        // 'autoplay': 'on',
+        // 'unmuteOverlay': 'hidden',
         'url': request.href,
         'parameters': request.parameters
       });

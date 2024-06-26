@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "0.2.9",
+  "version": "0.3.0",
   "name": "FlashPlayer - SWF to HTML",
   "description": "Open SWF links of Adobe Animate (Flash) in a pure sandboxed JavaScript emulator",
   "permissions": [
@@ -48,6 +48,15 @@
     "matches": ["*://*/*"]
   }],
   "commands": {
-    "_execute_action": {}
+    "_execute_action": {},
+    "search": {
+      "description": "Find SWF and Open in Emulator"
+    },
+    "inject-ruffle": {
+      "description": "Load all embedded SWF objects"
+    },
+    "open-empty": {
+      "description": "Open Empty Emulator (Local SWF)"
+    }
   }
 }

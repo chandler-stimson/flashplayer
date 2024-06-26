@@ -13,6 +13,8 @@ const notify = e => chrome.notifications.create({
   iconUrl: '/data/icons/48.png',
   title: chrome.runtime.getManifest().name,
   message: e.message || e
+}, notificationId => {
+  setTimeout(() => chrome.notifications.clear(notificationId), 3000);
 });
 
 const open = (o, title) => chrome.storage.local.get({
@@ -203,7 +205,7 @@ chrome.runtime.onMessage.addListener((request, sender) => {
   };
   chrome.runtime.onInstalled.addListener(startup);
 }
-chrome.contextMenus.onClicked.addListener((info, tab) => {
+const onClicked = (info, tab) => {
   if (info.menuItemId === 'copy') {
     search(tab, undefined, links => {
       if (links.length) {
@@ -271,7 +273,14 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   else if (info.menuItemId === 'open-empty') {
     open({}, 'Local SWF');
   }
-});
+};
+chrome.contextMenus.onClicked.addListener(onClicked);
+chrome.commands.onCommand.addListener(menuItemId => chrome.tabs.query({
+  active: true,
+  lastFocusedWindow: true
+}, tabs => onClicked({
+  menuItemId
+}, tabs[0])));
 
 /* FAQs & Feedback */
 {
@@ -287,7 +296,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         if (reason === 'install' || (prefs.faqs && reason === 'update')) {
           const doUpdate = (Date.now() - prefs['last-update']) / 1000 / 60 / 60 / 24 > 90;
           if (doUpdate && previousVersion !== version) {
-            tabs.query({active: true, currentWindow: true}, tbs => tabs.create({
+            tabs.query({active: true, lastFocusedWindow: true}, tbs => tabs.create({
               url: page + '?version=' + version + (previousVersion ? '&p=' + previousVersion : '') + '&type=' + reason,
               active: reason === 'install',
               ...(tbs && tbs.length && {index: tbs[0].index + 1})
